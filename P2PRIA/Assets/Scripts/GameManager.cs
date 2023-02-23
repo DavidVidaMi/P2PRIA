@@ -1,11 +1,12 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
-using System;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
+    private Cameras cameras;
+    public RawImage rawImage;
     void Start()
     {
         //Start a coroutine to call the API
@@ -32,8 +33,31 @@ public class GameManager : MonoBehaviour
                     Debug.LogError("HTTP Error: " + webRequest.error);
                     break;
                 case UnityWebRequest.Result.Success:
-                    Debug.Log(webRequest.downloadHandler.text);
+                    ShowImage(webRequest.downloadHandler.text);
                     break;
+            }
+        }
+
+        void ShowImage(string jsonString)
+        {
+            cameras = JsonUtility.FromJson<Cameras>(jsonString);
+            //rawImage.texture = UnityWebRequestTexture.GetTexture(cameras.listaCamaras[Random.Range(0, cameras.listaCamaras.Count)].imaxeCamara);
+
+            StartCoroutine(GetTexture(cameras.listaCamaras[Random.Range(0, cameras.listaCamaras.Count)].imaxeCamara));
+        }
+
+        IEnumerator GetTexture(string texture)
+        {
+            UnityWebRequest www = UnityWebRequestTexture.GetTexture(texture);
+            yield return www.SendWebRequest();
+
+            if (www.result != UnityWebRequest.Result.Success)
+            {
+                Debug.Log(www.error);
+            }
+            else
+            {
+                rawImage.texture = ((DownloadHandlerTexture)www.downloadHandler).texture;
             }
         }
     }
